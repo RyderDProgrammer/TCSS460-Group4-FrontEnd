@@ -11,7 +11,7 @@
 
 | Team Member | Contribution |
 |--------------|---------------|
-| **Ryder DeBack** | Created a new GitHub repository for the Front End project and helped fix bugs across both Movie and Credentials APIs. Reviewed APIs from Groups 5, 6, and 7 to provide feedback and identify best practices. |
+| **Ryder DeBack** | Created a new GitHub repository for the Front End project and helped fix and updated a large majority of the Movie API. |
 | **Kevin Nam Hoang** | Helped fix several API bugs and co-designed the Figma layout for the Front End. Reviewed and analyzed APIs from Groups 5, 6, and 7 to compare structures and gather ideas for the frontend implementation. |
 | **Faisal Nur** | Assisted in debugging routes, testing endpoints, and verifying API stability before frontend integration. Reviewed APIs from Groups 5, 6, and 7 and documented observations to support future improvements. |
 | **Mutahar Wafayee** | Worked on bug fixes in both APIs, co-designed the Figma layout with Kevin, and prepared the **README documentation** for the Front End Alpha release. Also reviewed Groups 5, 6, and 7 APIs and summarized feedback for the team. |
