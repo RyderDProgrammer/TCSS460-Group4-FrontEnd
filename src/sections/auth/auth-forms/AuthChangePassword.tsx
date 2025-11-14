@@ -2,9 +2,6 @@
 
 import { useEffect, useState, SyntheticEvent } from 'react';
 
-// next
-import { useRouter } from 'next/navigation';
-
 // material-ui
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -41,7 +38,6 @@ import EyeInvisibleOutlined from '@ant-design/icons/EyeInvisibleOutlined';
 
 export default function AuthChangePassword() {
   const scriptedRef = useScriptRef();
-  const router = useRouter();
 
   const [level, setLevel] = useState<StringColorProps>();
   const [showOldPassword, setShowOldPassword] = useState(false);
