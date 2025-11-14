@@ -3,7 +3,7 @@ import samplePage from './sample-page';
 import other from './other';
 import pages from './messages';
 import account from './account';
-import entertainment from './entertainment';
+import tvMovies from './tv-movies';
 
 // types
 import { NavItemType } from 'types/menu';
@@ -11,7 +11,7 @@ import { NavItemType } from 'types/menu';
 // ==============================|| MENU ITEMS ||============================== //
 
 const menuItems: { items: NavItemType[] } = {
-  items: [samplePage, pages, entertainment, account, other]
+  items: [samplePage, tvMovies, pages, account, other]
 };
 
 export default menuItems;
