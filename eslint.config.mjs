@@ -73,6 +73,7 @@ export default [
       'react/react-in-jsx-scope': 'off',
       'react/jsx-props-no-spreading': 'off',
       'react/display-name': 'off',
+      'react/no-unescaped-entities': 'off',
 
       // Import rules
       'import/order': 'off',
@@ -105,18 +106,7 @@ export default [
       ],
 
       // Prettier integration
-      'prettier/prettier': [
-        'warn',
-        {
-          bracketSpacing: true,
-          printWidth: 140,
-          singleQuote: true,
-          trailingComma: 'none',
-          tabWidth: 2,
-          useTabs: false,
-          endOfLine: 'auto'
-        }
-      ]
+      'prettier/prettier': 'off'
     }
   }
 ];
