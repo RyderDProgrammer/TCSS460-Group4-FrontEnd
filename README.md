@@ -36,4 +36,46 @@
 - Figma layout finalized for the Alpha design.  
 - APIs from Groups 5, 6, and 7 reviewed for comparison and improvement ideas.  
 - README finalized and sprint documentation completed on time.  
-- Strong teamwork and consistent communication throughout the sprint.  
+- Strong teamwork and consistent communication throughout the sprint.
+
+
+
+# 🚀 Front End Version Beta I Sprint
+
+## 🌐 Hosted Links  
+- **Vercel Front End Web App:** https://tcss-460-group4-front-end.vercel.app/  
+- **Credential API (Render):** https://tcss460-group7-credential-api-8zqv.onrender.com/  
+
+---
+
+## 🧩 Front End Beta I Sprint Contributions  
+
+| Team Member | Contribution |
+|-------------|--------------|
+| **Mutahar Wafayee** | Started the sprint and updated the register/login form so it fully matched the requirements of the 3rd-party Auth API. Also updated the README sections to reflect the new login workflow. |
+| **Faisal Nur** | Added the new **change-password form** that becomes available after login. Tested the form with the new API rules to make sure it works smoothly. |
+| **Ryder DeBack** | Built the **single movie** and **single TV show** pages/views. Removed the **Messages** and **Documentation** items from the menu to clean the UI. Finished the main Vercel production deployment for this sprint. |
+| **Kevin Nam Hoang** | Built the **list of movies and TV shows** page/view for logged-in users. Helped connect the API results to the UI. |
+| **All Members** | Everyone helped each other during debugging, testing, and checking the flow between pages. |
+
+---
+
+## 🗓️ Front End Beta I Sprint Meetings  
+
+- **Nov 10 – Sprint Kickoff (Discord):** Talked about the Beta I requirements, split the tasks, and checked what was needed from the Auth API.  
+- **Nov 12 – Mid-Sprint Working Session (Discord):** Reviewed progress on new pages and UI updates. Helped each other fix props, routes, and API response issues.  
+- **Nov 13 – Final Review + Deployment (Discord & GitHub):** Tested login, password change, single-view pages, and list pages. Verified menu cleanup. Ryder deployed the updated build to Vercel.  
+
+**Primary Communication:** Discord text + voice sessions  
+**Secondary Communication:** GitHub commits, pull requests, and project updates  
+
+---
+
+## 💬 Front End Beta I Sprint Comments  
+
+- Login and register forms now correctly follow the external Auth API rules.  
+- New core pages added: **list page**, **single movie**, and **single TV show**.  
+- Menu is cleaner after removing Messages and Documentation.  
+- Deployment to Vercel successful and stable.  
+- Team had good communication, quick bug fixes, and shared support during the whole sprint.
+
