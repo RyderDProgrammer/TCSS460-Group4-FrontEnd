@@ -50,10 +50,39 @@ credentialsService.interceptors.response.use(
   }
 );
 
+// ==============================|| MOVIE SERVICE ||============================== //
+
+const movieService = axios.create({ baseURL: process.env.MOVIE_API_URL?.replace('/api-docs/', '') || process.env.MOVIE_API_URL });
+
+movieService.interceptors.request.use(
+  async (config) => {
+    if (process.env.MOVIE_API_KEY) {
+      config.headers['X-API-Key'] = process.env.MOVIE_API_KEY;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+movieService.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === 'ECONNREFUSED') {
+      console.error('Connection refused. The Movie API server may be down.');
+      return Promise.reject({ message: 'Connection refused.' });
+    } else if (error.response?.status >= 500) {
+      return Promise.reject({ message: 'Server Error. Contact support' });
+    }
+    return Promise.reject((error.response && error.response.data) || 'Server connection refused');
+  }
+);
+
 // ==============================|| EXPORTS ||============================== //
 
 export default credentialsService; // Maintain backward compatibility
-export { credentialsService };
+export { credentialsService, movieService };
 
 // Credentials service helpers
 export const fetcher = async (args: string | [string, AxiosRequestConfig]) => {

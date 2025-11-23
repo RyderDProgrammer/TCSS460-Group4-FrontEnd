@@ -1,37 +1,110 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Typography, Grid, Chip, Stack, Divider, CardMedia } from '@mui/material';
+import { Box, Typography, Grid, Chip, Stack, Divider, CardMedia, CircularProgress } from '@mui/material';
 import MainCard from 'components/MainCard';
-import { IMovie } from 'types/movie';
-import { getMockMovieById } from 'data/mockMovies';
+import { Movie } from 'types/movie';
+import { movieApi } from 'services/movieApi';
+
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 
 interface MovieDetailProps {
   id: string;
 }
 
 export default function MovieDetail({ id }: MovieDetailProps) {
-  const [movie, setMovie] = useState<IMovie | null>(null);
+  const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate API call with mock data
     const fetchMovie = async () => {
       setLoading(true);
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const data = getMockMovieById(id);
-      setMovie(data || null);
-      setLoading(false);
+      setError(null);
+      try {
+        const response = await movieApi.getMovieById(Number(id));
+        const data: any = response.data;
+
+        // Handle different response structures
+        if (data && typeof data === 'object') {
+          if (Array.isArray(data) && data.length > 0) {
+            setMovie(data[0]);
+          } else if (data.movie_id) {
+            // Direct movie object
+            setMovie(data);
+          } else if (data.title && data.poster_url) {
+            // Movie object without movie_id at root (might use different key)
+            setMovie(data);
+          } else if (data.data) {
+            setMovie(Array.isArray(data.data) ? data.data[0] : data.data);
+          } else if (data.movie) {
+            // Wrapped in 'movie' key
+            setMovie(data.movie);
+          } else {
+            // Try to use it as-is if it has expected properties
+            if (data.title) {
+              setMovie(data);
+            } else {
+              setMovie(null);
+            }
+          }
+        } else {
+          setMovie(null);
+        }
+      } catch (err: any) {
+        console.error('Error fetching movie:', err);
+        setError(err.message || 'Failed to fetch movie');
+        setMovie(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchMovie();
   }, [id]);
 
+  const getImageUrl = (posterPath: string) => {
+    if (!posterPath) return '/placeholder-movie.png';
+    if (posterPath.startsWith('http')) return posterPath;
+    return `${TMDB_IMAGE_BASE}${posterPath}`;
+  };
+
+  const formatCurrency = (value: string | number) => {
+    const num = typeof value === 'string' ? parseInt(value, 10) : value;
+    if (isNaN(num)) return 'N/A';
+    return `$${num.toLocaleString()}`;
+  };
+
+  const formatRuntime = (minutes: number) => {
+    if (!minutes) return 'N/A';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   if (loading) {
     return (
       <MainCard title="Loading...">
-        <Typography>Loading movie details...</Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+          <CircularProgress />
+        </Box>
+      </MainCard>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainCard title="Error">
+        <Typography color="error">{error}</Typography>
       </MainCard>
     );
   }
@@ -44,6 +117,8 @@ export default function MovieDetail({ id }: MovieDetailProps) {
     );
   }
 
+  const genres = movie.genres ? movie.genres.split(',').map((g) => g.trim()) : [];
+
   return (
     <MainCard title={movie.title}>
       <Grid container spacing={3}>
@@ -51,7 +126,7 @@ export default function MovieDetail({ id }: MovieDetailProps) {
         <Grid item xs={12} md={4}>
           <CardMedia
             component="img"
-            image={movie.posterUrl}
+            image={getImageUrl(movie.poster_url)}
             alt={movie.title}
             sx={{
               width: '100%',
@@ -64,20 +139,12 @@ export default function MovieDetail({ id }: MovieDetailProps) {
         {/* Right Column - Details */}
         <Grid item xs={12} md={8}>
           <Stack spacing={2}>
-            {/* Tagline */}
-            {movie.tagline && (
-              <Typography variant="subtitle1" fontStyle="italic" color="text.secondary">
-                &ldquo;{movie.tagline}&rdquo;
-              </Typography>
+            {/* MPA Rating */}
+            {movie.mpa_rating && (
+              <Box>
+                <Chip label={movie.mpa_rating} color="primary" />
+              </Box>
             )}
-
-            {/* Rating */}
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                Rating
-              </Typography>
-              <Chip label={`⭐ ${movie.rating}/10`} color="primary" />
-            </Box>
 
             <Divider />
 
@@ -86,7 +153,7 @@ export default function MovieDetail({ id }: MovieDetailProps) {
               <Typography variant="h6" gutterBottom>
                 Release Date
               </Typography>
-              <Typography variant="body1">{new Date(movie.releaseDate).toLocaleDateString()}</Typography>
+              <Typography variant="body1">{formatDate(movie.release_date)}</Typography>
             </Box>
 
             <Divider />
@@ -96,77 +163,60 @@ export default function MovieDetail({ id }: MovieDetailProps) {
               <Typography variant="h6" gutterBottom>
                 Runtime
               </Typography>
-              <Typography variant="body1">
-                {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}m
-              </Typography>
+              <Typography variant="body1">{formatRuntime(movie.runtime_minutes)}</Typography>
             </Box>
 
             <Divider />
 
             {/* Genre */}
+            {genres.length > 0 && (
+              <>
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    Genre
+                  </Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    {genres.map((g) => (
+                      <Chip key={g} label={g} variant="outlined" />
+                    ))}
+                  </Stack>
+                </Box>
+                <Divider />
+              </>
+            )}
+
+            {/* Overview/Description */}
             <Box>
               <Typography variant="h6" gutterBottom>
-                Genre
+                Overview
               </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                {movie.genre.map((g) => (
-                  <Chip key={g} label={g} variant="outlined" />
-                ))}
-              </Stack>
-            </Box>
-
-            <Divider />
-
-            {/* Description */}
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                Description
-              </Typography>
-              <Typography variant="body1">{movie.description}</Typography>
+              <Typography variant="body1">{movie.overview || 'No description available.'}</Typography>
             </Box>
 
             <Divider />
 
             {/* Director */}
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                Director
-              </Typography>
-              <Typography variant="body1">{movie.director}</Typography>
-            </Box>
-
-            <Divider />
-
-            {/* Cast */}
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                Cast
-              </Typography>
-              <Typography variant="body1">{movie.cast.join(', ')}</Typography>
-            </Box>
-
-            <Divider />
-
-            {/* Language */}
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                Language
-              </Typography>
-              <Typography variant="body1">{movie.language}</Typography>
-            </Box>
+            {movie.directors && (
+              <>
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    Director
+                  </Typography>
+                  <Typography variant="body1">{movie.directors}</Typography>
+                </Box>
+                <Divider />
+              </>
+            )}
 
             {/* Budget & Revenue */}
             {(movie.budget || movie.revenue) && (
-              <>
-                <Divider />
-                <Box>
-                  <Typography variant="h6" gutterBottom>
-                    Box Office
-                  </Typography>
-                  {movie.budget && <Typography variant="body1">Budget: ${movie.budget.toLocaleString()}</Typography>}
-                  {movie.revenue && <Typography variant="body1">Revenue: ${movie.revenue.toLocaleString()}</Typography>}
-                </Box>
-              </>
+              <Box>
+                <Typography variant="h6" gutterBottom>
+                  Box Office
+                </Typography>
+                {movie.budget && <Typography variant="body1">Budget: {formatCurrency(movie.budget)}</Typography>}
+                {movie.revenue && <Typography variant="body1">Revenue: {formatCurrency(movie.revenue)}</Typography>}
+              </Box>
             )}
           </Stack>
         </Grid>

@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  turbopack: {
+    root: __dirname
+  },
+  logging: {
+    fetches: {
+      fullUrl: false
+    }
+  },
   modularizeImports: {
     '@mui/material': {
       transform: '@mui/material/{{member}}'
