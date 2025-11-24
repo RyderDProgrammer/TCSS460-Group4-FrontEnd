@@ -37,7 +37,7 @@ export default function MoviesView() {
     try {
       const response = await movieApi.getMovies({
         page: pageNum,
-        limit: 20,
+        limit: 10,
         title: searchTitle || undefined
       });
 
@@ -45,13 +45,20 @@ export default function MoviesView() {
       const data: any = response.data;
 
       if (Array.isArray(data)) {
-        setMovies(data);
-        setTotalPages(Math.ceil(data.length / 20) || 1);
+        // Client-side pagination for array responses
+        const startIndex = (pageNum - 1) * 10;
+        const paginatedMovies = data.slice(startIndex, startIndex + 10);
+        setMovies(paginatedMovies);
+        setTotalPages(Math.ceil(data.length / 10) || 1);
+      } else if (data?.data && Array.isArray(data.data)) {
+        // API returns { data: [...], meta: { pages: X } }
+        setMovies(data.data);
+        setTotalPages(data.meta?.pages || data.pagination?.totalPages || 1);
+      } else if (data?.results && Array.isArray(data.results)) {
+        setMovies(data.results);
+        setTotalPages(data.totalPages || 1);
       } else if (data?.movies && Array.isArray(data.movies)) {
         setMovies(data.movies);
-        setTotalPages(data.pagination?.totalPages || 1);
-      } else if (data?.data && Array.isArray(data.data)) {
-        setMovies(data.data);
         setTotalPages(data.pagination?.totalPages || 1);
       } else {
         setMovies([]);

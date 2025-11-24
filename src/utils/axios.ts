@@ -79,10 +79,39 @@ movieService.interceptors.response.use(
   }
 );
 
+// ==============================|| TV SERVICE ||============================== //
+
+const tvService = axios.create({ baseURL: process.env.TV_API_URL?.replace('/api-docs/', '') || process.env.TV_API_URL });
+
+tvService.interceptors.request.use(
+  async (config) => {
+    if (process.env.TV_API_KEY) {
+      config.headers['X-API-Key'] = process.env.TV_API_KEY;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+tvService.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === 'ECONNREFUSED') {
+      console.error('Connection refused. The TV API server may be down.');
+      return Promise.reject({ message: 'Connection refused.' });
+    } else if (error.response?.status >= 500) {
+      return Promise.reject({ message: 'Server Error. Contact support' });
+    }
+    return Promise.reject((error.response && error.response.data) || 'Server connection refused');
+  }
+);
+
 // ==============================|| EXPORTS ||============================== //
 
 export default credentialsService; // Maintain backward compatibility
-export { credentialsService, movieService };
+export { credentialsService, movieService, tvService };
 
 // Credentials service helpers
 export const fetcher = async (args: string | [string, AxiosRequestConfig]) => {
