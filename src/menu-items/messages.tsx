@@ -52,8 +52,7 @@ const pages: NavItemType = {
           title: <FormattedMessage id="delete-movie" defaultMessage="Delete Movie" />,
           type: 'item',
           url: '/movies/delete',
-          icon: icons.DeleteOutlined,
-          disabled: true
+          icon: icons.DeleteOutlined
         },
         {
           id: 'update-movie',
@@ -84,8 +83,7 @@ const pages: NavItemType = {
           title: <FormattedMessage id="delete-tvshow" defaultMessage="Delete TV Show" />,
           type: 'item',
           url: '/tvshows/delete',
-          icon: icons.DeleteOutlined,
-          disabled: true
+          icon: icons.DeleteOutlined
         },
         {
           id: 'update-tvshow',
