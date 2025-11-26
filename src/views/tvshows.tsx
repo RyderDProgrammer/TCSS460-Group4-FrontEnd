@@ -5,7 +5,6 @@ import {
   Grid,
   Box,
   Card,
-  CardMedia,
   CardContent,
   Typography,
   Stack,

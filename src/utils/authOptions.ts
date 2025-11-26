@@ -2,10 +2,8 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
-import axios from "axios";
-
 // project import
-// import { authApi } from 'services/authApi';
+import { authApi } from 'services/authApi';
 
 function getRandomInt(min: number, max: number) {
   min = Math.ceil(min);
@@ -31,25 +29,19 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         try {
-
-
-          const response = await axios.post(
-            `${process.env.CREDENTIALS_API_URL}/auth/login`,
-            {
-              email: credentials?.email!,
-              password: credentials?.password!
-            }
-          );
+          const response = await authApi.login({
+            email: credentials?.email!,
+            password: credentials?.password!
+          });
 
           if (response) {
             const data = response.data.data;
-            data.user["accessToken"] = data.accessToken;
+            data.user['accessToken'] = data.accessToken;
             return data.user;
           }
         } catch (e: any) {
           console.error(e);
-          const errorMessage =
-            e?.message || e?.response?.data?.message || "Something went wrong!";
+          const errorMessage = e?.message || e?.response?.data?.message || 'Something went wrong!';
           throw new Error(errorMessage);
         }
       }
@@ -67,11 +59,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         try {
-
-
-          const response = await axios.post(
-            `${process.env.CREDENTIALS_API_URL}/auth/register`,
-            {
+          const response = await authApi.register({
             firstname: credentials?.firstname!,
             lastname: credentials?.lastname!,
             password: credentials?.password!,

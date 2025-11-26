@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Typography, Grid, Chip, Stack, Divider, CardMedia, CircularProgress } from '@mui/material';
+import { Box, Typography, Grid, Chip, Stack, Divider, CircularProgress } from '@mui/material';
 import MainCard from 'components/MainCard';
 import { TVShow } from 'types/tvshow';
 import { tvApi } from 'services/tvApi';
