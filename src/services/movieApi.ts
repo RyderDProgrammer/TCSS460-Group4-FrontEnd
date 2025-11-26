@@ -1,6 +1,34 @@
 import { movieService } from 'utils/axios';
 import { Movie, MovieQueryParams } from 'types/movie';
 
+export interface CreateMoviePayload {
+  title: string;
+  original_title?: string;
+  release_date: string;
+  runtime_minutes: number;
+  overview?: string;
+  budget?: number;
+  revenue?: number;
+  mpa_rating?: string;
+  collection_name?: string;
+  poster_url?: string;
+  backdrop_url?: string;
+  genres?: string[];
+  directors?: string[];
+  producers?: string[];
+  studios?: Array<{
+    studio_name: string;
+    logo_url?: string;
+    country?: string;
+  }>;
+  cast?: Array<{
+    actor_name: string;
+    character_name?: string;
+    actor_order?: number;
+    profile_url?: string;
+  }>;
+}
+
 export const movieApi = {
   // Get all movies with optional filtering
   getMovies: (params?: MovieQueryParams) => {
@@ -52,5 +80,8 @@ export const movieApi = {
   getMoviesByCollectionId: (collectionId: number) => movieService.get<Movie[]>(`/api/collections/${collectionId}/movies`),
 
   // Get movies by collection name
-  getMoviesByCollectionName: (collectionName: string) => movieService.get<Movie[]>(`/api/collections/name/${collectionName}/movies`)
+  getMoviesByCollectionName: (collectionName: string) => movieService.get<Movie[]>(`/api/collections/name/${collectionName}/movies`),
+
+  // Create a new movie
+  createMovie: (data: CreateMoviePayload) => movieService.post<Movie>('/api/movies', data)
 };
