@@ -19,13 +19,19 @@ import MainCard from 'components/MainCard';
 import SearchIcon from '@ant-design/icons/SearchOutlined';
 import { tvApi } from 'services/tvApi';
 import { TVShow } from 'types/tvshow';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function TVShowsView() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pageFromUrl = parseInt(searchParams.get('page') || '1', 10);
+  const searchFromUrl = searchParams.get('search') || '';
+
+  const [searchQuery, setSearchQuery] = useState(searchFromUrl);
   const [tvShows, setTVShows] = useState<TVShow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(pageFromUrl);
   const [totalPages, setTotalPages] = useState(1);
 
   const fetchTVShows = useCallback(async (searchName?: string, pageNum: number = 1) => {
@@ -42,11 +48,17 @@ export default function TVShowsView() {
       const data: any = response.data;
 
       if (Array.isArray(data)) {
-        // Client-side pagination for array responses
+        // Client-side filtering and pagination for array responses
+        let filteredData = data;
+        if (searchName) {
+          filteredData = data.filter((show: TVShow) =>
+            show.name.toLowerCase().includes(searchName.toLowerCase())
+          );
+        }
         const startIndex = (pageNum - 1) * 10;
-        const paginatedShows = data.slice(startIndex, startIndex + 10);
+        const paginatedShows = filteredData.slice(startIndex, startIndex + 10);
         setTVShows(paginatedShows);
-        setTotalPages(Math.ceil(data.length / 10) || 1);
+        setTotalPages(Math.ceil(filteredData.length / 10) || 1);
       } else if (data?.results && Array.isArray(data.results)) {
         // API returns more than requested, do client-side limiting
         const shows = data.results.slice(0, 10);
@@ -70,23 +82,41 @@ export default function TVShowsView() {
     }
   }, []);
 
+  // Load data when page or search from URL changes
   useEffect(() => {
-    fetchTVShows();
-  }, [fetchTVShows]);
+    setPage(pageFromUrl);
+    setSearchQuery(searchFromUrl);
+    fetchTVShows(searchFromUrl, pageFromUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageFromUrl, searchFromUrl]);
 
-  // Debounced search
+  // Debounced search - only run when search query actually changes
   useEffect(() => {
+    if (searchQuery === '') return; // Don't run on empty search
+    if (searchQuery === searchFromUrl) return; // Don't run if search matches URL (already loaded)
+
     const timeoutId = setTimeout(() => {
       setPage(1);
       fetchTVShows(searchQuery, 1);
+      // Update URL to page 1 when searching
+      const params = new URLSearchParams();
+      params.set('page', '1');
+      params.set('search', searchQuery);
+      router.replace(`?${params.toString()}`, { scroll: false });
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, fetchTVShows]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
     fetchTVShows(searchQuery, value);
+    // Update URL with new page number (use replace to avoid adding to history)
+    const params = new URLSearchParams();
+    params.set('page', value.toString());
+    if (searchQuery) params.set('search', searchQuery);
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   const getFirstGenre = (genres: string) => {

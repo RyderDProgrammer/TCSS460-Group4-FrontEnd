@@ -1,10 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Typography, Grid, Chip, Stack, Divider, CardMedia, CircularProgress } from '@mui/material';
+import { Box, Typography, Grid, Chip, Stack, Divider, CardMedia, CircularProgress, Button, IconButton } from '@mui/material';
 import MainCard from 'components/MainCard';
 import { Movie } from 'types/movie';
 import { movieApi } from 'services/movieApi';
+import PlusOutlined from '@ant-design/icons/PlusOutlined';
+import CheckOutlined from '@ant-design/icons/CheckOutlined';
+import ArrowLeftOutlined from '@ant-design/icons/ArrowLeftOutlined';
+import { useRouter } from 'next/navigation';
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 
@@ -13,9 +17,11 @@ interface MovieDetailProps {
 }
 
 export default function MovieDetail({ id }: MovieDetailProps) {
+  const router = useRouter();
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInWatchList, setIsInWatchList] = useState(false);
 
   useEffect(() => {
     const fetchMovie = async () => {
@@ -62,6 +68,76 @@ export default function MovieDetail({ id }: MovieDetailProps) {
 
     fetchMovie();
   }, [id]);
+
+  useEffect(() => {
+    // Check if movie is in watch list
+    if (movie) {
+      checkWatchListStatus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [movie]);
+
+  const checkWatchListStatus = () => {
+    try {
+      const stored = localStorage.getItem('watchList');
+      if (stored) {
+        const watchList = JSON.parse(stored);
+        const exists = watchList.some((item: any) => item.contentId === Number(id) && item.type === 'movie');
+        setIsInWatchList(exists);
+      }
+    } catch (error) {
+      console.error('Error checking watch list:', error);
+    }
+  };
+
+  const handleAddToWatchList = () => {
+    if (!movie) return;
+
+    // Use movie_id from the object, or fall back to the URL id parameter
+    const movieId = movie.movie_id || Number(id);
+
+    // Validate movie ID
+    if (!movieId || isNaN(Number(movieId))) {
+      console.error('Cannot add movie to watch list: Invalid movie ID', { movie, urlId: id });
+      return;
+    }
+
+    try {
+      const stored = localStorage.getItem('watchList');
+      const watchList = stored ? JSON.parse(stored) : [];
+
+      const newItem = {
+        id: `movie-${movieId}-${Date.now()}`,
+        contentId: Number(movieId),
+        type: 'movie' as const,
+        title: movie.title,
+        posterUrl: movie.poster_url,
+        rating: movie.mpa_rating,
+        genre: movie.genres ? movie.genres.split(',')[0].trim() : undefined,
+        addedDate: new Date().toISOString()
+      };
+
+      watchList.push(newItem);
+      localStorage.setItem('watchList', JSON.stringify(watchList));
+      setIsInWatchList(true);
+    } catch (error) {
+      console.error('Error adding to watch list:', error);
+    }
+  };
+
+  const handleRemoveFromWatchList = () => {
+    try {
+      const stored = localStorage.getItem('watchList');
+      if (stored) {
+        const watchList = JSON.parse(stored);
+        const filtered = watchList.filter((item: any) => !(item.contentId === Number(id) && item.type === 'movie'));
+        localStorage.setItem('watchList', JSON.stringify(filtered));
+        setIsInWatchList(false);
+      }
+    } catch (error) {
+      console.error('Error removing from watch list:', error);
+    }
+  };
 
   const getImageUrl = (posterPath: string) => {
     if (!posterPath) return '/placeholder-movie.png';
@@ -120,7 +196,14 @@ export default function MovieDetail({ id }: MovieDetailProps) {
   const genres = movie.genres ? movie.genres.split(',').map((g) => g.trim()) : [];
 
   return (
-    <MainCard title={movie.title}>
+    <MainCard
+      title={movie.title}
+      secondary={
+        <IconButton onClick={() => router.back()} size="small" color="primary">
+          <ArrowLeftOutlined />
+        </IconButton>
+      }
+    >
       <Grid container spacing={3}>
         {/* Left Column - Poster */}
         <Grid item xs={12} md={4}>
@@ -139,12 +222,18 @@ export default function MovieDetail({ id }: MovieDetailProps) {
         {/* Right Column - Details */}
         <Grid item xs={12} md={8}>
           <Stack spacing={2}>
-            {/* MPA Rating */}
-            {movie.mpa_rating && (
-              <Box>
-                <Chip label={movie.mpa_rating} color="primary" />
-              </Box>
-            )}
+            {/* MPA Rating and Watch List Button */}
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              {movie.mpa_rating && <Chip label={movie.mpa_rating} color="primary" />}
+              <Button
+                variant={isInWatchList ? 'outlined' : 'contained'}
+                color={isInWatchList ? 'success' : 'primary'}
+                startIcon={isInWatchList ? <CheckOutlined /> : <PlusOutlined />}
+                onClick={isInWatchList ? handleRemoveFromWatchList : handleAddToWatchList}
+              >
+                {isInWatchList ? 'In Watch List' : 'Add to Watch List'}
+              </Button>
+            </Box>
 
             <Divider />
 
