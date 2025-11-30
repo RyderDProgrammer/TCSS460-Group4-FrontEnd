@@ -79,3 +79,47 @@
 - Deployment to Vercel successful and stable.  
 - Team had good communication, quick bug fixes, and shared support during the whole sprint.
 
+
+
+
+
+# 🚀 Front End Version **Beta II** Sprint
+
+## 🌐 Hosted Links  
+- **Vercel Front End Web App:** https://tcss-460-group4-front-end.vercel.app/  
+- **Credential API (Render):** https://tcss460-group7-credential-api-8zqv.onrender.com/  
+
+---
+
+## 🧩 Front End Beta II Sprint Contributions  
+
+| Team Member | Contribution |
+|-------------|--------------|
+| **Mutahar Wafayee** | Added the **change-password form** for logged-in users and fully connected it to the 3rd-party Auth API. Cleaned and tested the UI for smoother UX. Updated README documentation and fixed API bugs reported by other groups. |
+| **Kevin Nam Hoang** | Built the **Create Movie/Show** page with all required form fields and connected it to the 3rd-party Web API. Handled image-related logic based on the external API requirements. |
+| **Faisal Nur** | Designed the **UI/UX for deleting a Movie or Show** (design-only, no implementation). Focused on layout, confirmation flow, and visual consistency with the rest of the app. |
+| **Ryder DeBack** | Implemented the **search pages** for Movies and TV Shows using all search modes from the 3rd-party APIs. Added the **list view**, **single movie**, and **single TV show** pages with UX cleanup. Developed the team’s creative feature: a **Watchlist system** that allows users to add Movies/Shows to their personal watchlist. Helped fix various UI and routing bugs. |
+
+---
+
+## 🗓️ Front End Beta II Sprint Meetings  
+
+- **Nov 19 – Sprint Planning (Discord):** Assigned tasks for creation pages, search pages, password updates, and delete-design UI.  
+- **Nov 21 – Mid-Sprint Debugging Session (Discord):** Team worked through search routing issues, form handling, and Auth API edge cases.  
+- **Nov 26 – Final Review + Feature Testing (Discord & GitHub):** Completed UI cleanup, tested watchlist, verified 3rd-party API integrations, and finalized the README updates.
+
+**Primary Communication:** Discord (text + voice)  
+**Secondary Communication:** GitHub commits, PRs, and project updates  
+
+---
+
+## 💬 Front End Beta II Sprint Comments  
+
+- Change-password page fully connected to the 3rd-party Auth API.  
+- Create Movie/Show page implemented and API-connected.  
+- Search, list, and single-view pages improved with better UX.  
+- Delete UI/UX designed clearly for future implementation.  
+- New creative feature: **Watchlist**, with add-to-watchlist option.  
+- Strong collaboration and clean debugging throughout the sprint.
+
+
