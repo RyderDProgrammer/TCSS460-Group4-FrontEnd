@@ -85,9 +85,11 @@
 
 # 🚀 Front End Version **Beta II** Sprint
 
-## 🌐 Hosted Links  
-- **Vercel Front End Web App:** https://tcss-460-group4-front-end.vercel.app/  
-- **Credential API (Render):** https://tcss460-group7-credential-api-8zqv.onrender.com/  
+## 🌐 Hosted Links
+- **Vercel Front End Web App:** https://tcss-460-group4-front-end.vercel.app/
+- **Credential API (Render):** https://tcss460-group7-credential-api-8zqv.onrender.com/
+- **TV Show API:** https://helloworld-api-su2v.onrender.com/api-docs/
+- **Movie API:** https://tcss460-api.onrender.com/api-docs/
 
 ---
 
