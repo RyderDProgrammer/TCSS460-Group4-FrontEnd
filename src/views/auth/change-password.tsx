@@ -32,9 +32,6 @@ export default function ChangePasswordPage() {
                 - Must be different from your current password
               </Typography>
             </Stack>
-            <Typography variant="body2" color="warning.main" sx={{ mt: 2 }}>
-              Note: This form does not connect to the API yet. Full functionality will be available in a future sprint.
-            </Typography>
           </Stack>
           <Stack spacing={3} sx={{ mt: 3 }}>
             <AuthChangePassword />

@@ -13,21 +13,6 @@ if (!process.env.CREDENTIALS_API_URL) {
   );
 }
 
-if (!process.env.MESSAGES_WEB_API_URL) {
-  throw new Error(
-    'MESSAGES_WEB_API_URL environment variable is not set. ' +
-      'Please add MESSAGES_WEB_API_URL to your .env and/or next.config.js file(s). ' +
-      'Example: MESSAGES_WEB_API_URL=http://localhost:8000'
-  );
-}
-
-if (!process.env.MESSAGES_WEB_API_KEY) {
-  throw new Error(
-    'MESSAGE_WEB_API_KEY environment variable is not set. ' +
-      'Please add MESSAGE_WEB_API_KEY to your .env and/or next.config.js file(s). ' +
-      'Example: MESSAGE_WEB_API_KEY=your-api-key-here'
-  );
-}
 
 // ==============================|| CREDENTIALS SERVICE ||============================== //
 
@@ -65,13 +50,15 @@ credentialsService.interceptors.response.use(
   }
 );
 
-// ==============================|| MESSAGES SERVICE ||============================== //
+// ==============================|| MOVIE SERVICE ||============================== //
 
-const messagesService = axios.create({ baseURL: process.env.MESSAGES_WEB_API_URL });
+const movieService = axios.create({ baseURL: process.env.MOVIE_API_URL?.replace('/api-docs/', '') || process.env.MOVIE_API_URL });
 
-messagesService.interceptors.request.use(
+movieService.interceptors.request.use(
   async (config) => {
-    config.headers['X-API-Key'] = process.env.MESSAGES_WEB_API_KEY;
+    if (process.env.MOVIE_API_KEY) {
+      config.headers['X-API-Key'] = process.env.MOVIE_API_KEY;
+    }
     return config;
   },
   (error) => {
@@ -79,16 +66,41 @@ messagesService.interceptors.request.use(
   }
 );
 
-messagesService.interceptors.response.use(
+movieService.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.code === 'ECONNREFUSED') {
-      const { baseURL, url, data } = error.config;
-      console.error('Connection refused. The Messages API server may be down. Attempting to connect to: ');
-      console.error({ baseURL, url, data });
-      return Promise.reject({
-        message: 'Connection refused.'
-      });
+      console.error('Connection refused. The Movie API server may be down.');
+      return Promise.reject({ message: 'Connection refused.' });
+    } else if (error.response?.status >= 500) {
+      return Promise.reject({ message: 'Server Error. Contact support' });
+    }
+    return Promise.reject((error.response && error.response.data) || 'Server connection refused');
+  }
+);
+
+// ==============================|| TV SERVICE ||============================== //
+
+const tvService = axios.create({ baseURL: process.env.TV_API_URL?.replace('/api-docs/', '') || process.env.TV_API_URL });
+
+tvService.interceptors.request.use(
+  async (config) => {
+    if (process.env.TV_API_KEY) {
+      config.headers['X-API-Key'] = process.env.TV_API_KEY;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+tvService.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === 'ECONNREFUSED') {
+      console.error('Connection refused. The TV API server may be down.');
+      return Promise.reject({ message: 'Connection refused.' });
     } else if (error.response?.status >= 500) {
       return Promise.reject({ message: 'Server Error. Contact support' });
     }
@@ -99,7 +111,7 @@ messagesService.interceptors.response.use(
 // ==============================|| EXPORTS ||============================== //
 
 export default credentialsService; // Maintain backward compatibility
-export { credentialsService, messagesService };
+export { credentialsService, movieService, tvService };
 
 // Credentials service helpers
 export const fetcher = async (args: string | [string, AxiosRequestConfig]) => {
@@ -116,17 +128,3 @@ export const fetcherPost = async (args: string | [string, AxiosRequestConfig]) =
   return res.data;
 };
 
-// Messages service helpers
-export const messagesFetcher = async (args: string | [string, AxiosRequestConfig]) => {
-  const [url, config] = Array.isArray(args) ? args : [args];
-  const res = await messagesService.get(url, { ...config });
-
-  return res.data;
-};
-
-export const messagesFetcherPost = async (args: string | [string, AxiosRequestConfig]) => {
-  const [url, config] = Array.isArray(args) ? args : [args];
-  const res = await messagesService.post(url, { ...config });
-
-  return res.data;
-};

@@ -1,4 +1,5 @@
-import { styled, Switch } from '@mui/material';
+import Switch from '@mui/material/Switch';
+import { styled } from '@mui/material/styles';
 import { ThemeMode } from 'config';
 import useConfig from 'hooks/useConfig';
 

@@ -35,9 +35,6 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (response) {
-            // TODO form your user object based on the Credentials API you're using.
-            // Check their API docs.
-            // console.dir(response.data);
             const data = response.data.data;
             data.user['accessToken'] = data.accessToken;
             return data.user;

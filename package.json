@@ -1,9 +1,9 @@
 {
-  "name": "TCSS460 Next Template",
+  "name": "tcss460-next-template",
   "version": "1.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev -p 3000 --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
@@ -34,7 +34,6 @@
     "react-dom": "^18.3.1",
     "react-intl": "^6.8.3",
     "react-otp-input": "^3.1.1",
-    "react-timer-hook": "^3.0.7",
     "simplebar-react": "^3.2.7",
     "stylis-plugin-rtl": "^2.1.1",
     "swr": "^2.3.2",

@@ -1,6 +1,11 @@
 'use client';
 
 import { useEffect, useState, SyntheticEvent } from 'react';
+import { useSession } from 'next-auth/react';
+import { authApi } from 'services/authApi';
+//import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
+
 
 // material-ui
 import Box from '@mui/material/Box';
@@ -23,7 +28,7 @@ import IconButton from 'components/@extended/IconButton';
 import AnimateButton from 'components/@extended/AnimateButton';
 
 import { openSnackbar } from 'api/snackbar';
-import useScriptRef from 'hooks/useScriptRef';
+//import useScriptRef from 'hooks/useScriptRef';
 import { strengthColor, strengthIndicator } from 'utils/password-strength';
 
 // types
@@ -37,12 +42,17 @@ import EyeInvisibleOutlined from '@ant-design/icons/EyeInvisibleOutlined';
 // ============================|| CHANGE PASSWORD FORM ||============================ //
 
 export default function AuthChangePassword() {
-  const scriptedRef = useScriptRef();
+  //const scriptedRef = useScriptRef();
 
   const [level, setLevel] = useState<StringColorProps>();
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { data: session } = useSession();
+  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' | '' }>({ text: '', type: '' });
+  //const router = useRouter();
+
+
 
   const handleClickShowOldPassword = () => {
     setShowOldPassword(!showOldPassword);
@@ -92,37 +102,71 @@ export default function AuthChangePassword() {
           .test('confirmPassword', 'Both passwords must match!', (confirmPassword, yup) => yup.parent.newPassword === confirmPassword)
       })}
       onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+
         try {
-          // Note: This form does not connect to the API yet (as per requirements)
+          // Notee: This form does not connect to the API yet (as per requirements)
           // This is just UI implementation for this sprint
 
-          if (scriptedRef.current) {
+
+          const token = session?.token?.accessToken;
+
+          if (!token) {
+            throw new Error('You must be logged in to change your password.');
+          }
+
+
+          const res = await authApi.changePassword(
+            { oldPassword: values.oldPassword, newPassword: values.newPassword },
+            token
+          );
+
+
+          if (res.status === 200 || res.data) {
             setStatus({ success: true });
             setSubmitting(false);
 
             openSnackbar({
               open: true,
-              message: 'Password will be changed once API integration is complete.',
+              message: res.data?.message || 'Password changed successfully!',
               variant: 'alert',
-              alert: {
-                color: 'info'
-              }
+              alert: { color: 'success' },
+              close: false
             } as SnackbarProps);
 
-            setTimeout(() => {
-              // Reset form
-              values.oldPassword = '';
-              values.newPassword = '';
-              values.confirmPassword = '';
-            }, 1500);
+            setMessage({ text: 'Password changed successfully! Redirecting...', type: 'success' });
+
+            setTimeout(async () => {
+              await signOut({ redirect: false });
+              window.location.href = '/login';
+            }, 2500);
           }
         } catch (err: any) {
-          console.error(err);
-          if (scriptedRef.current) {
-            setStatus({ success: false });
-            setErrors({ submit: err.message });
-            setSubmitting(false);
-          }
+          console.error('Change password error:', err);
+
+          // Extract the most useful error message
+          const errorMessage =
+            err.response?.data?.message ||
+            err.response?.data?.error ||
+            err.message ||
+            'Failed to change password. Please try again.';
+
+          // Show error clearly on screen
+          setStatus({ success: false });
+          setErrors({ submit: errorMessage });
+          setSubmitting(false);
+
+          openSnackbar({
+            open: true,
+            message: errorMessage,
+            variant: 'alert',
+            alert: { color: 'error' },
+            close: false
+          } as SnackbarProps);
+
+          setMessage({
+            text: errorMessage,
+            type: 'error'
+          });
         }
       }}
     >
@@ -253,6 +297,17 @@ export default function AuthChangePassword() {
               </Grid>
             )}
             <Grid item xs={12}>
+              {message.text && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: message.type === 'success' ? 'green' : 'red',
+                    textAlign: 'center'
+                  }}
+                >
+                  {message.text}
+                </Typography>
+              )}
               <AnimateButton>
                 <Button disableElevation disabled={isSubmitting} fullWidth size="large" type="submit" variant="contained" color="primary">
                   Change Password
