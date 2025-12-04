@@ -46,38 +46,53 @@ export default function MoviesView() {
         limit: 10,
         title: searchTitle || undefined
       });
+      // Normalize different response shapes (array | { data: [...] } | { movies: [...] } | { results: [...] })
+      const res: any = response;
+      let payload: Movie[] = [];
+      let pages = 1;
 
-      // Handle response - check structure
-      const data: any = response.data;
+      if (Array.isArray(res)) {
+        payload = res as Movie[];
+      } else if (Array.isArray(res?.data)) {
+        payload = res.data as Movie[];
+      } else if (Array.isArray(res?.data?.data)) {
+        payload = res.data.data as Movie[];
+      } else if (Array.isArray(res?.movies)) {
+        payload = res.movies as Movie[];
+      } else if (Array.isArray(res?.data?.movies)) {
+        payload = res.data.movies as Movie[];
+      } else if (Array.isArray(res?.results)) {
+        payload = res.results as Movie[];
+      }
 
-      if (Array.isArray(data)) {
-        // Client-side filtering and pagination for array responses
-        let filteredData = data;
-        if (searchTitle) {
-          filteredData = data.filter((movie: Movie) =>
-            movie.title.toLowerCase().includes(searchTitle.toLowerCase())
-          );
+      // Pagination meta (try multiple common fields)
+      pages = res?.data?.meta?.pages || res?.data?.pagination?.totalPages || res?.pagination?.totalPages || res?.totalPages || res?.data?.totalPages || 1;
+
+      if (Array.isArray(payload) && payload.length > 0) {
+        // If API returned full dataset (no server pagination), apply client-side filtering + pagination when a title is provided
+        if (Array.isArray(payload) && payload.length > 0 && (res?.data == null || !res?.data?.meta)) {
+          let filteredData = payload;
+          if (searchTitle) {
+            filteredData = payload.filter((movie: Movie) =>
+              movie.title.toLowerCase().includes(searchTitle.toLowerCase())
+            );
+          }
+          const startIndex = (pageNum - 1) * 10;
+          const paginatedMovies = filteredData.slice(startIndex, startIndex + 10);
+          setMovies(paginatedMovies);
+          setTotalPages(Math.max(Math.ceil(filteredData.length / 10), 1));
+        } else {
+          setMovies(payload);
+          setTotalPages(pages || 1);
         }
-        const startIndex = (pageNum - 1) * 10;
-        const paginatedMovies = filteredData.slice(startIndex, startIndex + 10);
-        setMovies(paginatedMovies);
-        setTotalPages(Math.ceil(filteredData.length / 10) || 1);
-      } else if (data?.data && Array.isArray(data.data)) {
-        // API returns { data: [...], meta: { pages: X } }
-        setMovies(data.data);
-        setTotalPages(data.meta?.pages || data.pagination?.totalPages || 1);
-      } else if (data?.results && Array.isArray(data.results)) {
-        setMovies(data.results);
-        setTotalPages(data.totalPages || 1);
-      } else if (data?.movies && Array.isArray(data.movies)) {
-        setMovies(data.movies);
-        setTotalPages(data.pagination?.totalPages || 1);
       } else {
         setMovies([]);
+        setTotalPages(1);
       }
     } catch (err: any) {
       console.error('Error fetching movies:', err);
-      setError(err.message || 'Failed to fetch movies');
+      const msg = err?.message || (typeof err === 'string' ? err : JSON.stringify(err));
+      setError(msg || 'Failed to fetch movies');
       setMovies([]);
     } finally {
       setLoading(false);

@@ -29,6 +29,9 @@ export interface CreateMoviePayload {
   }>;
 }
 
+// Update payload - all fields are optional for PATCH
+export type UpdateMoviePayload = Partial<CreateMoviePayload>;
+
 export const movieApi = {
   // Get all movies with optional filtering
   getMovies: (params?: MovieQueryParams) => {
@@ -83,5 +86,8 @@ export const movieApi = {
   getMoviesByCollectionName: (collectionName: string) => movieService.get<Movie[]>(`/api/collections/name/${collectionName}/movies`),
 
   // Create a new movie
-  createMovie: (data: CreateMoviePayload) => movieService.post<Movie>('/api/movies', data)
+  createMovie: (data: CreateMoviePayload) => movieService.post<Movie>('/api/movies', data),
+
+  // Update an existing movie (partial update)
+  updateMovie: (id: number, data: UpdateMoviePayload) => movieService.patch<Movie>(`/api/movies/${id}`, data)
 };
