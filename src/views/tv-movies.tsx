@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Grid,
   Box,
@@ -15,7 +15,12 @@ import {
   Tabs,
   Tab,
   CircularProgress,
-  Pagination
+  Pagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button
 } from '@mui/material';
 import Link from 'next/link';
 import MainCard from 'components/MainCard';
@@ -24,20 +29,31 @@ import { movieApi } from 'services/movieApi';
 import { tvApi } from 'services/tvApi';
 import { Movie } from 'types/movie';
 import { TVShow } from 'types/tvshow';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 
 export default function TvMoviesView() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const moviePageFromUrl = parseInt(searchParams.get('moviePage') || '1', 10);
+  const tvPageFromUrl = parseInt(searchParams.get('tvPage') || '1', 10);
+  const searchFromUrl = searchParams.get('search') || '';
+
+  const [searchQuery, setSearchQuery] = useState(searchFromUrl);
   const [activeTab, setActiveTab] = useState<number>(0);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [tvShows, setTVShows] = useState<TVShow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [moviePage, setMoviePage] = useState(1);
-  const [tvPage, setTVPage] = useState(1);
+  const [moviePage, setMoviePage] = useState(moviePageFromUrl);
+  const [tvPage, setTVPage] = useState(tvPageFromUrl);
   const [totalMoviePages, setTotalMoviePages] = useState(1);
   const [totalTVPages, setTotalTVPages] = useState(1);
+  const [moviePageDialogOpen, setMoviePageDialogOpen] = useState(false);
+  const [tvPageDialogOpen, setTVPageDialogOpen] = useState(false);
+  const [moviePageInput, setMoviePageInput] = useState('');
+  const [tvPageInput, setTVPageInput] = useState('');
 
   // Determine what to show based on active tab
   const shouldShowMovies = activeTab === 0 || activeTab === 1;
@@ -132,6 +148,25 @@ export default function TvMoviesView() {
     [activeTab]
   );
 
+  // Helper function to update URL
+  const updateURL = useCallback((newMoviePage: number, newTVPage: number, newSearch: string) => {
+    const params = new URLSearchParams();
+
+    if (newMoviePage > 1) params.set('moviePage', newMoviePage.toString());
+    if (newTVPage > 1) params.set('tvPage', newTVPage.toString());
+    if (newSearch) params.set('search', newSearch);
+
+    const queryString = params.toString();
+    router.replace(queryString ? `?${queryString}` : window.location.pathname, { scroll: false });
+  }, [router]);
+
+  // Load data from URL on mount
+  useEffect(() => {
+    setMoviePage(moviePageFromUrl);
+    setTVPage(tvPageFromUrl);
+    setSearchQuery(searchFromUrl);
+  }, [moviePageFromUrl, tvPageFromUrl, searchFromUrl]);
+
   // Fetch data when dependencies change
   useEffect(() => {
     const fetchData = async () => {
@@ -153,25 +188,74 @@ export default function TvMoviesView() {
       }
     };
 
+    fetchData();
+  }, [searchQuery, moviePage, tvPage, activeTab, fetchMovies, fetchTVShows, shouldShowMovies, shouldShowTV]);
+
+  // Reset pages when switching tabs (skip on initial mount)
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    setMoviePage(1);
+    setTVPage(1);
+    updateURL(1, 1, searchQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  // Debounced search - reset pages and update URL
+  useEffect(() => {
+    if (searchQuery === searchFromUrl) return; // Don't run if search matches URL (already loaded)
+
     const timeoutId = setTimeout(() => {
-      fetchData();
+      setMoviePage(1);
+      setTVPage(1);
+      updateURL(1, 1, searchQuery);
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, moviePage, tvPage, activeTab, fetchMovies, fetchTVShows, shouldShowMovies, shouldShowTV]);
-
-  // Reset pages when switching tabs
-  useEffect(() => {
-    setMoviePage(1);
-    setTVPage(1);
-  }, [activeTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
 
   const handleMoviePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setMoviePage(value);
+    updateURL(value, tvPage, searchQuery);
   };
 
   const handleTVPageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setTVPage(value);
+    updateURL(moviePage, value, searchQuery);
+  };
+
+  const handleMoviePageJump = () => {
+    const pageNum = parseInt(moviePageInput, 10);
+    if (pageNum >= 1 && pageNum <= totalMoviePages) {
+      handleMoviePageChange({} as React.ChangeEvent<unknown>, pageNum);
+      setMoviePageDialogOpen(false);
+      setMoviePageInput('');
+    }
+  };
+
+  const handleTVPageJump = () => {
+    const pageNum = parseInt(tvPageInput, 10);
+    if (pageNum >= 1 && pageNum <= totalTVPages) {
+      handleTVPageChange({} as React.ChangeEvent<unknown>, pageNum);
+      setTVPageDialogOpen(false);
+      setTVPageInput('');
+    }
+  };
+
+  const handleMoviePageInputKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleMoviePageJump();
+    }
+  };
+
+  const handleTVPageInputKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTVPageJump();
+    }
   };
 
   const getMovieImageUrl = (posterPath: string) => {
@@ -281,8 +365,23 @@ export default function TvMoviesView() {
 
             {/* Pagination for Movies */}
             {totalMoviePages > 1 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                <Pagination count={totalMoviePages} page={moviePage} onChange={handleMoviePageChange} color="primary" />
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 2 }}>
+                <Pagination
+                  count={totalMoviePages}
+                  page={moviePage}
+                  onChange={handleMoviePageChange}
+                  color="primary"
+                  showFirstButton
+                  showLastButton
+                />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setMoviePageDialogOpen(true)}
+                  sx={{ minWidth: '80px' }}
+                >
+                  Go to...
+                </Button>
               </Box>
             )}
           </Box>
@@ -341,8 +440,23 @@ export default function TvMoviesView() {
 
             {/* Pagination for TV Shows */}
             {totalTVPages > 1 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                <Pagination count={totalTVPages} page={tvPage} onChange={handleTVPageChange} color="primary" />
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 2 }}>
+                <Pagination
+                  count={totalTVPages}
+                  page={tvPage}
+                  onChange={handleTVPageChange}
+                  color="primary"
+                  showFirstButton
+                  showLastButton
+                />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setTVPageDialogOpen(true)}
+                  sx={{ minWidth: '80px' }}
+                >
+                  Go to...
+                </Button>
               </Box>
             )}
           </Box>
@@ -361,6 +475,58 @@ export default function TvMoviesView() {
           </Box>
         )}
       </Stack>
+
+      {/* Page Jump Dialog for Movies */}
+      <Dialog open={moviePageDialogOpen} onClose={() => setMoviePageDialogOpen(false)}>
+        <DialogTitle>Jump to Movie Page</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Page Number"
+            type="number"
+            fullWidth
+            variant="outlined"
+            value={moviePageInput}
+            onChange={(e) => setMoviePageInput(e.target.value)}
+            onKeyPress={handleMoviePageInputKeyPress}
+            helperText={`Enter a page number between 1 and ${totalMoviePages}`}
+            inputProps={{ min: 1, max: totalMoviePages }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setMoviePageDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleMoviePageJump} variant="contained">
+            Go
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Page Jump Dialog for TV Shows */}
+      <Dialog open={tvPageDialogOpen} onClose={() => setTVPageDialogOpen(false)}>
+        <DialogTitle>Jump to TV Show Page</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Page Number"
+            type="number"
+            fullWidth
+            variant="outlined"
+            value={tvPageInput}
+            onChange={(e) => setTVPageInput(e.target.value)}
+            onKeyPress={handleTVPageInputKeyPress}
+            helperText={`Enter a page number between 1 and ${totalTVPages}`}
+            inputProps={{ min: 1, max: totalTVPages }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTVPageDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleTVPageJump} variant="contained">
+            Go
+          </Button>
+        </DialogActions>
+      </Dialog>
     </MainCard>
   );
 }

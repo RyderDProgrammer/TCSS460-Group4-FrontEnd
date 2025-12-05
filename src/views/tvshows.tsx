@@ -12,7 +12,12 @@ import {
   TextField,
   InputAdornment,
   CircularProgress,
-  Pagination
+  Pagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button
 } from '@mui/material';
 import Link from 'next/link';
 import MainCard from 'components/MainCard';
@@ -33,6 +38,8 @@ export default function TVShowsView() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(pageFromUrl);
   const [totalPages, setTotalPages] = useState(1);
+  const [pageDialogOpen, setPageDialogOpen] = useState(false);
+  const [pageInput, setPageInput] = useState('');
 
   const fetchTVShows = useCallback(async (searchName?: string, pageNum: number = 1) => {
     setLoading(true);
@@ -117,6 +124,21 @@ export default function TVShowsView() {
     params.set('page', value.toString());
     if (searchQuery) params.set('search', searchQuery);
     router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
+  const handlePageJump = () => {
+    const pageNum = parseInt(pageInput, 10);
+    if (pageNum >= 1 && pageNum <= totalPages) {
+      handlePageChange({} as React.ChangeEvent<unknown>, pageNum);
+      setPageDialogOpen(false);
+      setPageInput('');
+    }
+  };
+
+  const handlePageInputKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handlePageJump();
+    }
   };
 
   const getFirstGenre = (genres: string) => {
@@ -221,8 +243,23 @@ export default function TVShowsView() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                <Pagination count={totalPages} page={page} onChange={handlePageChange} color="primary" />
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 3 }}>
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  showFirstButton
+                  showLastButton
+                />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setPageDialogOpen(true)}
+                  sx={{ minWidth: '80px' }}
+                >
+                  Go to...
+                </Button>
               </Box>
             )}
           </>
@@ -237,6 +274,32 @@ export default function TVShowsView() {
           </Box>
         )}
       </Stack>
+
+      {/* Page Jump Dialog */}
+      <Dialog open={pageDialogOpen} onClose={() => setPageDialogOpen(false)}>
+        <DialogTitle>Jump to Page</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Page Number"
+            type="number"
+            fullWidth
+            variant="outlined"
+            value={pageInput}
+            onChange={(e) => setPageInput(e.target.value)}
+            onKeyPress={handlePageInputKeyPress}
+            helperText={`Enter a page number between 1 and ${totalPages}`}
+            inputProps={{ min: 1, max: totalPages }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPageDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handlePageJump} variant="contained">
+            Go
+          </Button>
+        </DialogActions>
+      </Dialog>
     </MainCard>
   );
 }

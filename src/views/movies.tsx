@@ -13,7 +13,12 @@ import {
   TextField,
   InputAdornment,
   CircularProgress,
-  Pagination
+  Pagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button
 } from '@mui/material';
 import Link from 'next/link';
 import MainCard from 'components/MainCard';
@@ -36,6 +41,8 @@ export default function MoviesView() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(pageFromUrl);
   const [totalPages, setTotalPages] = useState(1);
+  const [pageDialogOpen, setPageDialogOpen] = useState(false);
+  const [pageInput, setPageInput] = useState('');
 
   const fetchMovies = useCallback(async (searchTitle?: string, pageNum: number = 1) => {
     setLoading(true);
@@ -136,6 +143,21 @@ export default function MoviesView() {
     router.replace(`?${params.toString()}`, { scroll: false });
   };
 
+  const handlePageJump = () => {
+    const pageNum = parseInt(pageInput, 10);
+    if (pageNum >= 1 && pageNum <= totalPages) {
+      handlePageChange({} as React.ChangeEvent<unknown>, pageNum);
+      setPageDialogOpen(false);
+      setPageInput('');
+    }
+  };
+
+  const handlePageInputKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handlePageJump();
+    }
+  };
+
   const getImageUrl = (posterPath: string) => {
     if (!posterPath) return '/placeholder-movie.png';
     if (posterPath.startsWith('http')) return posterPath;
@@ -224,8 +246,23 @@ export default function MoviesView() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                <Pagination count={totalPages} page={page} onChange={handlePageChange} color="primary" />
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 3 }}>
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  showFirstButton
+                  showLastButton
+                />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setPageDialogOpen(true)}
+                  sx={{ minWidth: '80px' }}
+                >
+                  Go to...
+                </Button>
               </Box>
             )}
           </>
@@ -240,6 +277,32 @@ export default function MoviesView() {
           </Box>
         )}
       </Stack>
+
+      {/* Page Jump Dialog */}
+      <Dialog open={pageDialogOpen} onClose={() => setPageDialogOpen(false)}>
+        <DialogTitle>Jump to Page</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Page Number"
+            type="number"
+            fullWidth
+            variant="outlined"
+            value={pageInput}
+            onChange={(e) => setPageInput(e.target.value)}
+            onKeyPress={handlePageInputKeyPress}
+            helperText={`Enter a page number between 1 and ${totalPages}`}
+            inputProps={{ min: 1, max: totalPages }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPageDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handlePageJump} variant="contained">
+            Go
+          </Button>
+        </DialogActions>
+      </Dialog>
     </MainCard>
   );
 }
