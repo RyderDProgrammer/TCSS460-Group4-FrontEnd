@@ -33,6 +33,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 
+// Local SVG placeholder as data URI (no external dependencies)
+const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9Ijc1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNTAwIiBoZWlnaHQ9Ijc1MCIgZmlsbD0iIzFhMWExYSIvPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDI1MCwgMzc1KSI+PHJlY3QgeD0iLTYwIiB5PSItODAiIHdpZHRoPSIxMjAiIGhlaWdodD0iMTYwIiBmaWxsPSJub25lIiBzdHJva2U9IiM2NjY2NjYiIHN0cm9rZS13aWR0aD0iNCIgcng9IjgiLz48cmVjdCB4PSItNTAiIHk9Ii03MCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzY2NjY2NiIgc3Ryb2tlLXdpZHRoPSIyIi8+PGNpcmNsZSBjeD0iLTQwIiBjeT0iLTYwIiByPSI2IiBmaWxsPSIjNjY2NjY2Ii8+PGNpcmNsZSBjeD0iNDAiIGN5PSItNjAiIHI9IjYiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSItNDAiIGN5PSI2MCIgcj0iNiIgZmlsbD0iIzY2NjY2NiIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iNjAiIHI9IjYiIGZpbGw9IiM2NjY2NjYiLz48dGV4dCB4PSIwIiB5PSIxMjAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzY2NjY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gSW1hZ2U8L3RleHQ+PC9nPjwvc3ZnPg==';
+
 export default function TvMoviesView() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -265,13 +268,18 @@ export default function TvMoviesView() {
   };
 
   const getTVImageUrl = (posterUrl: string | null | undefined, backdropUrl?: string | null) => {
-    if (posterUrl && posterUrl !== 'null' && posterUrl !== 'undefined') {
-      return posterUrl;
+    // Validate poster URL
+    if (posterUrl && posterUrl !== 'null' && posterUrl !== 'undefined' && posterUrl.trim() !== '' && posterUrl !== '/') {
+      if (posterUrl.startsWith('http')) return posterUrl;
+      return `${TMDB_IMAGE_BASE}${posterUrl}`;
     }
-    if (backdropUrl && backdropUrl !== 'null' && backdropUrl !== 'undefined') {
-      return backdropUrl;
+    // Validate backdrop URL
+    if (backdropUrl && backdropUrl !== 'null' && backdropUrl !== 'undefined' && backdropUrl.trim() !== '' && backdropUrl !== '/') {
+      if (backdropUrl.startsWith('http')) return backdropUrl;
+      return `${TMDB_IMAGE_BASE}${backdropUrl}`;
     }
-    return 'https://via.placeholder.com/500x750?text=No+Image';
+    // Fallback to placeholder
+    return PLACEHOLDER_IMAGE;
   };
 
   const getFirstGenre = (genres: string | string[]) => {
@@ -414,11 +422,15 @@ export default function TvMoviesView() {
                         alt={tvShow.name}
                         onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                           const target = e.currentTarget;
+                          console.error('Image failed to load:', target.src, 'for TV show:', tvShow.name);
                           if (tvShow.backdrop_url && !target.dataset.triedBackdrop) {
                             target.dataset.triedBackdrop = 'true';
-                            target.src = tvShow.backdrop_url;
+                            const backdropUrl = tvShow.backdrop_url.startsWith('http')
+                              ? tvShow.backdrop_url
+                              : `${TMDB_IMAGE_BASE}${tvShow.backdrop_url}`;
+                            target.src = backdropUrl;
                           } else {
-                            target.src = 'https://via.placeholder.com/500x750?text=No+Image';
+                            target.src = PLACEHOLDER_IMAGE;
                           }
                         }}
                         sx={{ width: '100%', height: 200, objectFit: 'cover' }}

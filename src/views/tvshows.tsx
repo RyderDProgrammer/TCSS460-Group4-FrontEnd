@@ -26,6 +26,8 @@ import { tvApi } from 'services/tvApi';
 import { TVShow } from 'types/tvshow';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
+
 export default function TVShowsView() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -148,12 +150,17 @@ export default function TVShowsView() {
   };
 
   const getImageUrl = (posterUrl: string | null | undefined, backdropUrl?: string | null) => {
-    if (posterUrl && posterUrl !== 'null' && posterUrl !== 'undefined') {
-      return posterUrl;
+    // Validate poster URL
+    if (posterUrl && posterUrl !== 'null' && posterUrl !== 'undefined' && posterUrl.trim() !== '' && posterUrl !== '/') {
+      if (posterUrl.startsWith('http')) return posterUrl;
+      return `${TMDB_IMAGE_BASE}${posterUrl}`;
     }
-    if (backdropUrl && backdropUrl !== 'null' && backdropUrl !== 'undefined') {
-      return backdropUrl;
+    // Validate backdrop URL
+    if (backdropUrl && backdropUrl !== 'null' && backdropUrl !== 'undefined' && backdropUrl.trim() !== '' && backdropUrl !== '/') {
+      if (backdropUrl.startsWith('http')) return backdropUrl;
+      return `${TMDB_IMAGE_BASE}${backdropUrl}`;
     }
+    // Fallback to placeholder
     return 'https://via.placeholder.com/500x750?text=No+Image';
   };
 
@@ -219,7 +226,10 @@ export default function TVShowsView() {
                           // Try backdrop_url if poster fails and we haven't tried it yet
                           if (tvShow.backdrop_url && !target.dataset.triedBackdrop) {
                             target.dataset.triedBackdrop = 'true';
-                            target.src = tvShow.backdrop_url;
+                            const backdropUrl = tvShow.backdrop_url.startsWith('http')
+                              ? tvShow.backdrop_url
+                              : `${TMDB_IMAGE_BASE}${tvShow.backdrop_url}`;
+                            target.src = backdropUrl;
                           } else {
                             target.src = 'https://via.placeholder.com/500x750?text=No+Image';
                           }
