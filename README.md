@@ -125,3 +125,56 @@
 - Strong collaboration and clean debugging throughout the sprint.
 
 
+---
+
+---
+
+# 🚀 Published Front End Production – Final Sprint
+
+### 🌐 Hosted Links  
+- **Vercel Front End (Production):** https://tcss-460-group4-front-end.vercel.app/  
+- **Credential API (Render):** https://tcss460-group7-credential-api-8zqv.onrender.com/  
+- **Movie API:** https://tcss460-api.onrender.com/api-docs/  
+- **TV Show API:** https://helloworld-api-su2v.onrender.com/api-docs/
+
+---
+
+# 🧩 Published Front End Production Sprint Contributions  
+
+**Team Member** | **Contribution**  
+---|---  
+**Faisal Nur** | Implemented full **Delete functionality** for Movies and TV Shows. Added the **Password Reset flow**, including “Forgot Password” and token-based reset. Integrated **Email Verification** so new users automatically receive a verification email upon registration. **Reviewed all final features, pages, and flows to ensure everything worked correctly before production release.**  
+**Kevin Nam Hoang** | Implemented the **Update Movie** and **Update TV Show** pages. Fixed the major **search error** that previously caused the website to break when searching for movies or TV shows. Migrated API hosting to a **new Render account** to prevent timeouts during production. **Reviewed all final pages, forms, and UI behavior across the site.**  
+**Ryder DeBack** | Resolved key issues with the **Movies** and **TV Shows** pages, including fixing missing pagination and incorrect TV Show rendering. Implemented fully functional, **clickable and searchable pagination** across the entire application. **Reviewed all routing, pagination, and display logic for final validation.**  
+**Mutahar Wafayee** | Converted the sample page into the new **Home Page**, added a background image, general info, and a welcome message. Prepared the **README documentation** for the production release. **Reviewed the complete frontend layout, styling, and content for consistency and clarity.**  
+
+---
+
+# 🗓️ Published Front End Production Sprint Meetings  
+
+**Dec 1 – Production Kickoff (Discord):**  
+Team reviewed remaining tasks for production release, finalized responsibilities, and outlined missing features (update pages, delete flow, home page redesign, pagination fixes).
+
+**Dec 3 – Debugging + Integration Session (Discord):**  
+Worked through search issues, pagination errors, user authentication flows, and API hosting timeouts. Verified full integration with Movie, TV Show, and Credential APIs.
+
+**Dec 5 – Final QA + Deployment (Discord & GitHub):**  
+Performed complete end-to-end testing across all user flows: registration, login, email verification, password reset, search, create/update/delete, pagination, and watchlist interactions. Confirmed all fixes and deployed stable production build to Vercel.
+
+**Primary Communication:** Discord (text + voice)  
+**Secondary Communication:** GitHub (commits, PRs, reviews)
+
+---
+
+# 💬 Final Sprint Comments  
+
+- All core and extended features are fully implemented and production-ready.  
+- The frontend is completely integrated with all 3rd-party APIs (Movies, TV Shows, Credentials).  
+- Major UX improvements completed, including a redesigned home page and consistent page layouts.  
+- Pagination now works cleanly on every applicable page.  
+- Search errors and API timeout issues resolved for stable deployment.  
+- Delete, Update, Password Reset, and Email Verification features finalized.  
+- README updated and final documentation completed on time.  
+- Strong collaboration and thorough peer-review by all members ensured a polished final release.
+
+
