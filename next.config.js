@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  turbopack: {
-    root: __dirname
+  outputFileTracingRoot: __dirname,
+  outputFileTracingIncludes: {
+    '/': ['./public/**/*']
   },
   logging: {
     fetches: {
