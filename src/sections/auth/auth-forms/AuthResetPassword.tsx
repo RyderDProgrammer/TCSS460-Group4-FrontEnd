@@ -3,7 +3,7 @@
 import { useEffect, useState, SyntheticEvent } from 'react';
 
 // next
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 // material-ui
 import Box from '@mui/material/Box';
@@ -24,6 +24,7 @@ import { Formik } from 'formik';
 // project import
 import IconButton from 'components/@extended/IconButton';
 import AnimateButton from 'components/@extended/AnimateButton';
+import { authApi } from 'services/authApi';
 
 import { openSnackbar } from 'api/snackbar';
 import useScriptRef from 'hooks/useScriptRef';
@@ -42,6 +43,8 @@ import EyeInvisibleOutlined from '@ant-design/icons/EyeInvisibleOutlined';
 export default function AuthResetPassword() {
   const scriptedRef = useScriptRef();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token');
 
   const [level, setLevel] = useState<StringColorProps>();
   const [showPassword, setShowPassword] = useState(false);
@@ -77,14 +80,23 @@ export default function AuthResetPassword() {
       })}
       onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
         try {
-          // password reset
+          // Check if token exists
+          if (!token) {
+            setErrors({ submit: 'Invalid or missing reset token' });
+            setSubmitting(false);
+            return;
+          }
+
+          // Call password reset API
+          await authApi.resetPassword(token, values.password);
+
           if (scriptedRef.current) {
             setStatus({ success: true });
             setSubmitting(false);
 
             openSnackbar({
               open: true,
-              message: 'Successfuly reset password.',
+              message: 'Successfully reset password.',
               variant: 'alert',
               alert: {
                 color: 'success'
@@ -99,7 +111,7 @@ export default function AuthResetPassword() {
           console.error(err);
           if (scriptedRef.current) {
             setStatus({ success: false });
-            setErrors({ submit: err.message });
+            setErrors({ submit: err?.response?.data?.message || err.message || 'Failed to reset password' });
             setSubmitting(false);
           }
         }

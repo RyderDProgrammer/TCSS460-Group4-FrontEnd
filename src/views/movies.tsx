@@ -13,7 +13,12 @@ import {
   TextField,
   InputAdornment,
   CircularProgress,
-  Pagination
+  Pagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button
 } from '@mui/material';
 import Link from 'next/link';
 import MainCard from 'components/MainCard';
@@ -36,6 +41,8 @@ export default function MoviesView() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(pageFromUrl);
   const [totalPages, setTotalPages] = useState(1);
+  const [pageDialogOpen, setPageDialogOpen] = useState(false);
+  const [pageInput, setPageInput] = useState('');
 
   const fetchMovies = useCallback(async (searchTitle?: string, pageNum: number = 1) => {
     setLoading(true);
@@ -46,38 +53,53 @@ export default function MoviesView() {
         limit: 10,
         title: searchTitle || undefined
       });
+      // Normalize different response shapes (array | { data: [...] } | { movies: [...] } | { results: [...] })
+      const res: any = response;
+      let payload: Movie[] = [];
+      let pages = 1;
 
-      // Handle response - check structure
-      const data: any = response.data;
+      if (Array.isArray(res)) {
+        payload = res as Movie[];
+      } else if (Array.isArray(res?.data)) {
+        payload = res.data as Movie[];
+      } else if (Array.isArray(res?.data?.data)) {
+        payload = res.data.data as Movie[];
+      } else if (Array.isArray(res?.movies)) {
+        payload = res.movies as Movie[];
+      } else if (Array.isArray(res?.data?.movies)) {
+        payload = res.data.movies as Movie[];
+      } else if (Array.isArray(res?.results)) {
+        payload = res.results as Movie[];
+      }
 
-      if (Array.isArray(data)) {
-        // Client-side filtering and pagination for array responses
-        let filteredData = data;
-        if (searchTitle) {
-          filteredData = data.filter((movie: Movie) =>
-            movie.title.toLowerCase().includes(searchTitle.toLowerCase())
-          );
+      // Pagination meta (try multiple common fields)
+      pages = res?.data?.meta?.pages || res?.data?.pagination?.totalPages || res?.pagination?.totalPages || res?.totalPages || res?.data?.totalPages || 1;
+
+      if (Array.isArray(payload) && payload.length > 0) {
+        // If API returned full dataset (no server pagination), apply client-side filtering + pagination when a title is provided
+        if (Array.isArray(payload) && payload.length > 0 && (res?.data == null || !res?.data?.meta)) {
+          let filteredData = payload;
+          if (searchTitle) {
+            filteredData = payload.filter((movie: Movie) =>
+              movie.title.toLowerCase().includes(searchTitle.toLowerCase())
+            );
+          }
+          const startIndex = (pageNum - 1) * 10;
+          const paginatedMovies = filteredData.slice(startIndex, startIndex + 10);
+          setMovies(paginatedMovies);
+          setTotalPages(Math.max(Math.ceil(filteredData.length / 10), 1));
+        } else {
+          setMovies(payload);
+          setTotalPages(pages || 1);
         }
-        const startIndex = (pageNum - 1) * 10;
-        const paginatedMovies = filteredData.slice(startIndex, startIndex + 10);
-        setMovies(paginatedMovies);
-        setTotalPages(Math.ceil(filteredData.length / 10) || 1);
-      } else if (data?.data && Array.isArray(data.data)) {
-        // API returns { data: [...], meta: { pages: X } }
-        setMovies(data.data);
-        setTotalPages(data.meta?.pages || data.pagination?.totalPages || 1);
-      } else if (data?.results && Array.isArray(data.results)) {
-        setMovies(data.results);
-        setTotalPages(data.totalPages || 1);
-      } else if (data?.movies && Array.isArray(data.movies)) {
-        setMovies(data.movies);
-        setTotalPages(data.pagination?.totalPages || 1);
       } else {
         setMovies([]);
+        setTotalPages(1);
       }
     } catch (err: any) {
       console.error('Error fetching movies:', err);
-      setError(err.message || 'Failed to fetch movies');
+      const msg = err?.message || (typeof err === 'string' ? err : JSON.stringify(err));
+      setError(msg || 'Failed to fetch movies');
       setMovies([]);
     } finally {
       setLoading(false);
@@ -119,6 +141,21 @@ export default function MoviesView() {
     params.set('page', value.toString());
     if (searchQuery) params.set('search', searchQuery);
     router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
+  const handlePageJump = () => {
+    const pageNum = parseInt(pageInput, 10);
+    if (pageNum >= 1 && pageNum <= totalPages) {
+      handlePageChange({} as React.ChangeEvent<unknown>, pageNum);
+      setPageDialogOpen(false);
+      setPageInput('');
+    }
+  };
+
+  const handlePageInputKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handlePageJump();
+    }
   };
 
   const getImageUrl = (posterPath: string) => {
@@ -209,8 +246,23 @@ export default function MoviesView() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                <Pagination count={totalPages} page={page} onChange={handlePageChange} color="primary" />
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 3 }}>
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  showFirstButton
+                  showLastButton
+                />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setPageDialogOpen(true)}
+                  sx={{ minWidth: '80px' }}
+                >
+                  Go to...
+                </Button>
               </Box>
             )}
           </>
@@ -225,6 +277,32 @@ export default function MoviesView() {
           </Box>
         )}
       </Stack>
+
+      {/* Page Jump Dialog */}
+      <Dialog open={pageDialogOpen} onClose={() => setPageDialogOpen(false)}>
+        <DialogTitle>Jump to Page</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Page Number"
+            type="number"
+            fullWidth
+            variant="outlined"
+            value={pageInput}
+            onChange={(e) => setPageInput(e.target.value)}
+            onKeyPress={handlePageInputKeyPress}
+            helperText={`Enter a page number between 1 and ${totalPages}`}
+            inputProps={{ min: 1, max: totalPages }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPageDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handlePageJump} variant="contained">
+            Go
+          </Button>
+        </DialogActions>
+      </Dialog>
     </MainCard>
   );
 }

@@ -59,8 +59,7 @@ const pages: NavItemType = {
           title: <FormattedMessage id="update-movie" defaultMessage="Update Movie" />,
           type: 'item',
           url: '/movies/update',
-          icon: icons.EditOutlined,
-          disabled: true
+          icon: icons.EditOutlined
         }
       ]
     },
@@ -90,8 +89,7 @@ const pages: NavItemType = {
           title: <FormattedMessage id="update-tvshow" defaultMessage="Update TV Show" />,
           type: 'item',
           url: '/tvshows/update',
-          icon: icons.EditOutlined,
-          disabled: true
+          icon: icons.EditOutlined
         }
       ]
     }

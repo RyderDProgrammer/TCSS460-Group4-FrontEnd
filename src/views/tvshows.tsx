@@ -12,7 +12,12 @@ import {
   TextField,
   InputAdornment,
   CircularProgress,
-  Pagination
+  Pagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button
 } from '@mui/material';
 import Link from 'next/link';
 import MainCard from 'components/MainCard';
@@ -20,6 +25,8 @@ import SearchIcon from '@ant-design/icons/SearchOutlined';
 import { tvApi } from 'services/tvApi';
 import { TVShow } from 'types/tvshow';
 import { useRouter, useSearchParams } from 'next/navigation';
+
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 
 export default function TVShowsView() {
   const router = useRouter();
@@ -33,6 +40,8 @@ export default function TVShowsView() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(pageFromUrl);
   const [totalPages, setTotalPages] = useState(1);
+  const [pageDialogOpen, setPageDialogOpen] = useState(false);
+  const [pageInput, setPageInput] = useState('');
 
   const fetchTVShows = useCallback(async (searchName?: string, pageNum: number = 1) => {
     setLoading(true);
@@ -119,6 +128,21 @@ export default function TVShowsView() {
     router.replace(`?${params.toString()}`, { scroll: false });
   };
 
+  const handlePageJump = () => {
+    const pageNum = parseInt(pageInput, 10);
+    if (pageNum >= 1 && pageNum <= totalPages) {
+      handlePageChange({} as React.ChangeEvent<unknown>, pageNum);
+      setPageDialogOpen(false);
+      setPageInput('');
+    }
+  };
+
+  const handlePageInputKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handlePageJump();
+    }
+  };
+
   const getFirstGenre = (genres: string) => {
     if (!genres) return 'Unknown';
     // Genres are separated by semicolon in this API
@@ -126,12 +150,17 @@ export default function TVShowsView() {
   };
 
   const getImageUrl = (posterUrl: string | null | undefined, backdropUrl?: string | null) => {
-    if (posterUrl && posterUrl !== 'null' && posterUrl !== 'undefined') {
-      return posterUrl;
+    // Validate poster URL
+    if (posterUrl && posterUrl !== 'null' && posterUrl !== 'undefined' && posterUrl.trim() !== '' && posterUrl !== '/') {
+      if (posterUrl.startsWith('http')) return posterUrl;
+      return `${TMDB_IMAGE_BASE}${posterUrl}`;
     }
-    if (backdropUrl && backdropUrl !== 'null' && backdropUrl !== 'undefined') {
-      return backdropUrl;
+    // Validate backdrop URL
+    if (backdropUrl && backdropUrl !== 'null' && backdropUrl !== 'undefined' && backdropUrl.trim() !== '' && backdropUrl !== '/') {
+      if (backdropUrl.startsWith('http')) return backdropUrl;
+      return `${TMDB_IMAGE_BASE}${backdropUrl}`;
     }
+    // Fallback to placeholder
     return 'https://via.placeholder.com/500x750?text=No+Image';
   };
 
@@ -197,7 +226,10 @@ export default function TVShowsView() {
                           // Try backdrop_url if poster fails and we haven't tried it yet
                           if (tvShow.backdrop_url && !target.dataset.triedBackdrop) {
                             target.dataset.triedBackdrop = 'true';
-                            target.src = tvShow.backdrop_url;
+                            const backdropUrl = tvShow.backdrop_url.startsWith('http')
+                              ? tvShow.backdrop_url
+                              : `${TMDB_IMAGE_BASE}${tvShow.backdrop_url}`;
+                            target.src = backdropUrl;
                           } else {
                             target.src = 'https://via.placeholder.com/500x750?text=No+Image';
                           }
@@ -221,8 +253,23 @@ export default function TVShowsView() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                <Pagination count={totalPages} page={page} onChange={handlePageChange} color="primary" />
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 3 }}>
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  showFirstButton
+                  showLastButton
+                />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setPageDialogOpen(true)}
+                  sx={{ minWidth: '80px' }}
+                >
+                  Go to...
+                </Button>
               </Box>
             )}
           </>
@@ -237,6 +284,32 @@ export default function TVShowsView() {
           </Box>
         )}
       </Stack>
+
+      {/* Page Jump Dialog */}
+      <Dialog open={pageDialogOpen} onClose={() => setPageDialogOpen(false)}>
+        <DialogTitle>Jump to Page</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Page Number"
+            type="number"
+            fullWidth
+            variant="outlined"
+            value={pageInput}
+            onChange={(e) => setPageInput(e.target.value)}
+            onKeyPress={handlePageInputKeyPress}
+            helperText={`Enter a page number between 1 and ${totalPages}`}
+            inputProps={{ min: 1, max: totalPages }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPageDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handlePageJump} variant="contained">
+            Go
+          </Button>
+        </DialogActions>
+      </Dialog>
     </MainCard>
   );
 }

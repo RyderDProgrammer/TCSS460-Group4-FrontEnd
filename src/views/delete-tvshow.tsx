@@ -24,6 +24,8 @@ import { TVShow } from 'types/tvshow';
 import DeleteConfirmationDialog from 'components/DeleteConfirmationDialog';
 import { useSnackbar } from 'notistack';
 
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
+
 export default function DeleteTVShowView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [tvShows, setTVShows] = useState<TVShow[]>([]);
@@ -104,12 +106,17 @@ export default function DeleteTVShowView() {
   };
 
   const getImageUrl = (posterUrl: string | null | undefined, backdropUrl?: string | null) => {
-    if (posterUrl && posterUrl !== 'null' && posterUrl !== 'undefined') {
-      return posterUrl;
+    // Validate poster URL
+    if (posterUrl && posterUrl !== 'null' && posterUrl !== 'undefined' && posterUrl.trim() !== '' && posterUrl !== '/') {
+      if (posterUrl.startsWith('http')) return posterUrl;
+      return `${TMDB_IMAGE_BASE}${posterUrl}`;
     }
-    if (backdropUrl && backdropUrl !== 'null' && backdropUrl !== 'undefined') {
-      return backdropUrl;
+    // Validate backdrop URL
+    if (backdropUrl && backdropUrl !== 'null' && backdropUrl !== 'undefined' && backdropUrl.trim() !== '' && backdropUrl !== '/') {
+      if (backdropUrl.startsWith('http')) return backdropUrl;
+      return `${TMDB_IMAGE_BASE}${backdropUrl}`;
     }
+    // Fallback to placeholder
     return 'https://via.placeholder.com/500x750?text=No+Image';
   };
 
@@ -125,10 +132,10 @@ export default function DeleteTVShowView() {
 
     setDeleting(true);
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Delete from database via API
+      await tvApi.deleteTVShow(selectedTVShow.id);
 
-      // Client-side delete: Remove from local state only
+      // Remove from local state after successful API call
       setTVShows((prevShows) => prevShows.filter((show) => show.id !== selectedTVShow.id));
 
       enqueueSnackbar('TV Show deleted successfully', { variant: 'success' });
@@ -209,7 +216,10 @@ export default function DeleteTVShowView() {
                             // Try backdrop_url if poster fails and we haven't tried it yet
                             if (tvShow.backdrop_url && !target.dataset.triedBackdrop) {
                               target.dataset.triedBackdrop = 'true';
-                              target.src = tvShow.backdrop_url;
+                              const backdropUrl = tvShow.backdrop_url.startsWith('http')
+                                ? tvShow.backdrop_url
+                                : `${TMDB_IMAGE_BASE}${tvShow.backdrop_url}`;
+                              target.src = backdropUrl;
                             } else {
                               target.src = 'https://via.placeholder.com/500x750?text=No+Image';
                             }

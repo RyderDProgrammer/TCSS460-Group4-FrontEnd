@@ -29,6 +29,7 @@ import AnimateButton from 'components/@extended/AnimateButton';
 
 import { APP_DEFAULT_PATH } from 'config';
 import { strengthColor, strengthIndicator } from 'utils/password-strength';
+import { authApi } from 'services/authApi';
 
 // assets
 import EyeOutlined from '@ant-design/icons/EyeOutlined';
@@ -87,10 +88,24 @@ export default function AuthRegister({ providers, csrfToken }: any) {
           email: trimmedEmail,
           password: values.password,
           callbackUrl: APP_DEFAULT_PATH
-        }).then((res: any) => {
+        }).then(async (res: any) => {
           if (res?.error) {
             setErrors({ submit: res.error });
             setSubmitting(false);
+          } else {
+            // Registration successful, now send verification email
+            // Note: After registration, user is automatically logged in by NextAuth
+            try {
+              // Wait a moment for the session to be established
+              await new Promise((resolve) => setTimeout(resolve, 500));
+
+              // Send verification email
+              // The axios interceptor will automatically include the JWT token
+              await authApi.sendVerificationEmail();
+            } catch (error) {
+              // Don't block registration if email fails to send
+              // User can manually request verification email later
+            }
           }
         });
       }}
