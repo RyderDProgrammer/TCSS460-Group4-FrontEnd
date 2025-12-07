@@ -39,5 +39,8 @@ export const tvApi = {
   getTVShowById: (id: number) => tvService.get<TVShow>(`/api/shows/${id}`),
 
   // Create a new TV show
-  createTVShow: (data: CreateTVShowPayload) => tvService.post<TVShow>('/api/shows', data)
+  createTVShow: (data: CreateTVShowPayload) => tvService.post<TVShow>('/api/shows', data),
+
+  // Delete a TV show by ID
+  deleteTVShow: (id: number) => tvService.delete(`/api/shows/${id}`)
 };

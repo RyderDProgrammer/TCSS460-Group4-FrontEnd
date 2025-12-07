@@ -125,10 +125,10 @@ export default function DeleteTVShowView() {
 
     setDeleting(true);
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Delete from database via API
+      await tvApi.deleteTVShow(selectedTVShow.id);
 
-      // Client-side delete: Remove from local state only
+      // Remove from local state after successful API call
       setTVShows((prevShows) => prevShows.filter((show) => show.id !== selectedTVShow.id));
 
       enqueueSnackbar('TV Show deleted successfully', { variant: 'success' });

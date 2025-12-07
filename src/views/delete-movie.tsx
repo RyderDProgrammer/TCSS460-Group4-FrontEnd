@@ -122,10 +122,10 @@ export default function DeleteMovieView() {
 
     setDeleting(true);
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Delete from database via API
+      await movieApi.deleteMovie(selectedMovie.movie_id);
 
-      // Client-side delete: Remove from local state only
+      // Remove from local state after successful API call
       setMovies((prevMovies) => prevMovies.filter((m) => m.movie_id !== selectedMovie.movie_id));
 
       enqueueSnackbar('Movie deleted successfully', { variant: 'success' });

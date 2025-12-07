@@ -19,6 +19,7 @@ import { Formik } from 'formik';
 // project import
 import useScriptRef from 'hooks/useScriptRef';
 import AnimateButton from 'components/@extended/AnimateButton';
+import { authApi } from 'services/authApi';
 
 import { openSnackbar } from 'api/snackbar';
 
@@ -42,6 +43,9 @@ export default function AuthForgotPassword() {
       })}
       onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
         try {
+          // Call the password reset API
+          await authApi.requestPasswordReset(values.email);
+
           setStatus({ success: true });
           setSubmitting(false);
 
@@ -60,7 +64,7 @@ export default function AuthForgotPassword() {
         } catch (err: any) {
           if (scriptedRef.current) {
             setStatus({ success: false });
-            setErrors({ submit: err.message });
+            setErrors({ submit: err?.response?.data?.message || err.message || 'Failed to send reset email' });
             setSubmitting(false);
           }
         }

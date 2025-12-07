@@ -83,5 +83,8 @@ export const movieApi = {
   getMoviesByCollectionName: (collectionName: string) => movieService.get<Movie[]>(`/api/collections/name/${collectionName}/movies`),
 
   // Create a new movie
-  createMovie: (data: CreateMoviePayload) => movieService.post<Movie>('/api/movies', data)
+  createMovie: (data: CreateMoviePayload) => movieService.post<Movie>('/api/movies', data),
+
+  // Delete a movie by ID
+  deleteMovie: (id: number) => movieService.delete(`/api/movies/${id}`)
 };
