@@ -102,7 +102,7 @@ export default function AuthRegister({ providers, csrfToken }: any) {
               // Send verification email
               // The axios interceptor will automatically include the JWT token
               await authApi.sendVerificationEmail();
-            } catch (error) {
+            } catch {
               // Don't block registration if email fails to send
               // User can manually request verification email later
             }
