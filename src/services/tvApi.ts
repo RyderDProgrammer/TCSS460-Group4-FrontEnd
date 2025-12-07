@@ -22,13 +22,17 @@ export interface CreateTVShowPayload {
   actors?: string;
 }
 
+// Update payload - all fields are optional for PATCH
+export type UpdateTVShowPayload = Partial<CreateTVShowPayload>;
+
 export const tvApi = {
   // Get all TV shows with optional filtering
   getTVShows: (params?: TVShowQueryParams) => {
     const queryParams = new URLSearchParams();
 
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    // The TV API expects `pageSize` rather than `limit`. Support `limit` here as an alias
+    if (params?.limit) queryParams.append('pageSize', params.limit.toString());
     if (params?.name) queryParams.append('name', params.name);
 
     const queryString = queryParams.toString();
@@ -40,6 +44,9 @@ export const tvApi = {
 
   // Create a new TV show
   createTVShow: (data: CreateTVShowPayload) => tvService.post<TVShow>('/api/shows', data),
+
+  // Update an existing TV show (partial update)
+  updateTVShow: (id: number, data: UpdateTVShowPayload) => tvService.patch<TVShow>(`/api/shows/${id}`, data),
 
   // Delete a TV show by ID
   deleteTVShow: (id: number) => tvService.delete(`/api/shows/${id}`)
